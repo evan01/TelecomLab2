@@ -1,5 +1,8 @@
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Hashtable;
 
 
 public class DnsPacket {
@@ -67,8 +70,11 @@ public class DnsPacket {
 			qtypeShort = 0x0001;	// IP address
 		} else if (qtype.toUpperCase() == TYPE_NS) {
 			qtypeShort = 0x0002;	// Name server
-		} else {
+		} else if (qtype.toUpperCase() == TYPE_MX){
 			qtypeShort = 0x000f;	// Mail server
+		} else {
+			qtypeShort = 0x0000;
+			System.out.println("Invalid QTYPE: " + qtype);
 		}
 		
 		byte[] qnameByteArray = parseQNAME(qname);		
@@ -85,6 +91,67 @@ public class DnsPacket {
 		ByteBuffer answer = ByteBuffer.allocate(0);
 		
 		return answer.array();
+	}
+	
+	public void parseAnswer(
+			byte[] header,
+			byte[] question,
+			byte[] answer) {
+		
+		int index = 0;
+		for (byte b : answer) {
+			// e.g. [c0 0c] [22 33] [44 55] [66 77 88 99] [aa bb] [cc dd ee ff] 
+			if (String.format("%02X", b).equals("C0")) {
+				
+				Hashtable<String, String> packet = new Hashtable<String, String>();
+				
+				short responseTYPE = (short)((answer[index + 2] << 8) | answer[index + 3]);
+				packet.put("TYPE", Short.toString(responseTYPE));
+				
+				short responseCLASS = (short)((answer[index + 4] << 8) | answer[index + 5]);
+				packet.put("CLASS", Short.toString(responseCLASS));
+				
+				long responseTTL = (long)(((answer[index + 6] << 24) | (answer[index + 7]) << 16 | answer[index + 8]) << 8 | answer[index + 9]);
+				packet.put("TTL", Long.toString(responseTTL));
+				
+				short responseRDLENGTH = (short)((answer[index + 10] << 8) | answer[index + 11]);
+				packet.put("RDLEGNTH", Short.toString(responseRDLENGTH));
+				
+				byte[] responseRDATA = new byte[responseRDLENGTH];
+				
+				// IP Address
+				if(responseTYPE == 0x0001) {					
+					for (int i = 0; i < responseRDATA.length; i++) {
+						responseRDATA[i] = answer[index + 12 + i];
+					}
+					
+					try {
+						InetAddress ipAddr = InetAddress.getByAddress(responseRDATA);
+						packet.put("RDATA", ipAddr.getHostAddress());
+					} catch (UnknownHostException e){
+						System.out.println("Invalid IP address");
+					}
+				
+				// Name server
+				} else if (responseTYPE == 0x0002) {
+					for (int i = 0; i < responseRDATA.length; i++) {
+						responseRDATA[i] = answer[index + 12 + i];
+					}
+				
+				
+				// CNAME (name of the alias)
+				} else if (responseTYPE == 0x0005) {
+					
+				// Mail server					
+				} else if (responseTYPE == 0x000f) {
+				
+				// Error
+				} else {
+					
+				}
+			}						
+		}
+		
 	}
 	
 	// Parse domain name (QNAME) into sequence of bytes 
