@@ -1,3 +1,5 @@
+package lab;
+
 /**
  * TelecomLab2
  * Created by eknox on 2016-09-29.
@@ -7,8 +9,8 @@ public class DNSOptions {
     public int maxRetries;
     public int port;
     public String queryType;
-    public String server;
-    public String name;
+    public byte[] server;
+    public String query;
 
 
     public DNSOptions(){

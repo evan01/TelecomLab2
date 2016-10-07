@@ -1,5 +1,5 @@
-/**
- * UDPServer
+package example; /**
+ * example.UDPServer
  * 
  * Adapted from the example given in Section 2.8 of Kurose and Ross, Computer
  * Networking: A Top-Down Approach (5th edition)

@@ -1,5 +1,5 @@
-/**
- * MultiThreadedTCPServer
+package example; /**
+ * example.MultiThreadedTCPServer
  * 
  * Processes each incoming connection in a parallel thread using Java's Runnable class.
  * 
