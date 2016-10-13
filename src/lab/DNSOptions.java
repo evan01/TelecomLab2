@@ -8,9 +8,9 @@ public class DNSOptions {
     public int timeout;
     public int maxRetries;
     public int port;
-    public String queryType;
-    public byte[] server;
-    public String query;
+    public String queryType; // type of query
+    public byte[] server; // IP addr of DNS server
+    public String query; // www.mcgill.ca
 
 
     public DNSOptions(){

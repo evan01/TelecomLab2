@@ -5,12 +5,13 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Hashtable;
+import java.util.Random;
 
 
 public class DnsPacket {
 
     //This is the byte[] representation of the packet
-    byte[] bytes;
+    byte[] packetByte;
     //These are the arguments that were supplied to the packet
     DNSOptions options;
 
@@ -19,28 +20,57 @@ public class DnsPacket {
     private String TYPE_NS = "NS";
     private String TYPE_MX = "MX";
 
-    public String NAME;
-    public int TYPE;
+    public String QNAME;
+    public String QTYPE;
     public byte[] HEADER;
     public byte[] QUESTION;
     public byte[] ANSWER;
-    public int size;
+    public int UDP_DATA_BLOCK_SIZE = 512; // RFC791
+    
+    // Header attributes
+    short ID;
+    byte QR, OPCODE, AA, TC, RD, RA, Z, RCODE;
+    short QDCOUNT, ANCOUNT, NSCOUNT, ARCOUNT;
 
     // Constructors
 
     /**
      * This constructor will create a DNS packet based off of the options supplied
-     * @param opts
+     * @param option
      */
-    public DnsPacket(DNSOptions opts) {
-        this.options = opts;
-    }
+    public DnsPacket(DNSOptions option) {
+        this.QNAME = option.query;
+        this.QTYPE = option.queryType;
+        
+        short id = generateRandomID();
+        
+        HEADER = packetHeader(id, 
+	        		(byte)0, // QR: query (0) or response(1)
+	        		(byte)0, // OPCODE: 0 for standard query
+	        		(byte)0, // AA: report whether response is authoritative
+	        		(byte)0, // TC: indicate whether or not message is truncated
+	        		(byte)1, // RD: 1 to indicate desire recursion
+	        		(byte)0, // RA: print error if server does not support recursive queries
+	        		(byte)0, // Z: 0 
+	        		(byte)0, // RCODE: 0 in request
+	        		(short)1, // QDCOUNT: 1
+	        		(short)0, // ANCOUNT: number of resource records in answer
+	        		(short)0, // NSCOUNT: ignore any response entries
+	        		(short)0); // ARCOUNT:
 
-    public DnsPacket(String name, int type) {
-        this.NAME = name;
-        this.TYPE = type;
+        QUESTION = packetQuestion(QNAME, QTYPE, (short)0x0001);
+        
+        int size = UDP_DATA_BLOCK_SIZE - HEADER.length - QUESTION.length;
+        ANSWER = packetAnswer(size);
+        
+        ByteBuffer packetByteBuffer = ByteBuffer.allocate(UDP_DATA_BLOCK_SIZE);
+        packetByteBuffer.put(HEADER);
+        packetByteBuffer.put(QUESTION);
+        packetByteBuffer.put(ANSWER);
+        
+        packetByte = packetByteBuffer.array();
     }
-
+    
     public byte[] packetHeader(
             short id,
             byte qr,
@@ -55,9 +85,22 @@ public class DnsPacket {
             short ancount,
             short nscount,
             short arcount) {
-
-        byte[] header = new byte[12];
-
+    	
+    	this.ID = id;
+        this.QR = qr;
+        this.OPCODE = opcode;
+        this.AA = aa;
+        this.TC = tc;
+        this.RD = rd;
+        this.RA = ra;
+        this.Z = z;
+        this.RCODE = rcode;
+        this.QDCOUNT = qdcount;
+        this.ANCOUNT = ancount;
+        this.NSCOUNT = nscount;
+        this.ARCOUNT = arcount;
+    	
+    	byte[] header = new byte[12];
         header[0] = (byte) (id >>> 8);
         header[1] = (byte) (id);
         header[2] = (byte) ((qr << 7) | (opcode << 3) | (aa << 2) | (tc << 1) | rd);
@@ -72,21 +115,12 @@ public class DnsPacket {
         header[11] = (byte) nscount;
 
         return header;
-    }
-
+    }   
+    
+    // Construct packet question
     public byte[] packetQuestion(String qname, String qtype, short qclass) {
 
-        short qtypeShort;
-        if (qtype.toUpperCase() == TYPE_A) {
-            qtypeShort = 0x0001;    // IP address
-        } else if (qtype.toUpperCase() == TYPE_NS) {
-            qtypeShort = 0x0002;    // Name server
-        } else if (qtype.toUpperCase() == TYPE_MX) {
-            qtypeShort = 0x000f;    // Mail server
-        } else {
-            qtypeShort = 0x0000;
-            System.out.println("Invalid QTYPE: " + qtype);
-        }
+    	short qtypeShort = parseType(qtype);
 
         byte[] qnameByteArray = parseQNAME(qname);
         ByteBuffer question = ByteBuffer.allocate(qnameByteArray.length + 2 * Short.BYTES);
@@ -97,14 +131,22 @@ public class DnsPacket {
 
         return question.array();
     }
-
-    public byte[] packetAnswer() {
-        ByteBuffer answer = ByteBuffer.allocate(0);
-
-        return answer.array();
+    
+    // Construct packet answer
+    public byte[] packetAnswer(int size) {    	
+        byte[] answer = new byte[size];
+    	return answer;
     }
-
-    public void parseAnswer(byte[] header,byte[] question, byte[] answer) {
+    
+    public void interpretHeader(byte[] header) {
+    	
+    }
+    
+    public void interpretQuestion(byte[] question) {
+    	
+    }
+    
+    public void interpretAnswer(byte[] header, byte[] question, byte[] answer) {
 
         int index = 0;
         for (byte b : answer) {
@@ -126,11 +168,11 @@ public class DnsPacket {
                 packet.put("RDLEGNTH", Short.toString(responseRDLENGTH));
 
                 byte[] responseRDATA = new byte[responseRDLENGTH];
-
+                                
                 // IP Address
                 if (responseTYPE == 0x0001) {
                     for (int i = 0; i < responseRDATA.length; i++) {
-                        responseRDATA[i] = answer[index + 12 + i];
+                        responseRDATA[i] = answer[index + 12 + i]; // offset = 12
                     }
 
                     try {
@@ -138,28 +180,31 @@ public class DnsPacket {
                         packet.put("RDATA", ipAddr.getHostAddress());
                     } catch (UnknownHostException e) {
                         System.out.println("Invalid IP address");
-                    }
-
-                    // Name server
-                } else if (responseTYPE == 0x0002) {
-                    for (int i = 0; i < responseRDATA.length; i++) {
-                        responseRDATA[i] = answer[index + 12 + i];
-                    }
-
-
-                    // CNAME (name of the alias)
-                } else if (responseTYPE == 0x0005) {
-
-                    // Mail server
-                } else if (responseTYPE == 0x000f) {
-
-                    // Error
-                } else {
+                    }                
+                } 
+                
+                // Name server (name of the server)
+                else if (responseTYPE == 0x0002) {
+                    
+                }
+                
+                // CNAME (name of the alias)
+                else if (responseTYPE == 0x0005) {
 
                 }
+                
+                // Mail server
+                else if (responseTYPE == 0x000f) {
+                	
+                }
+                
+                // Error
+                else {
+                	System.out.println("Error parsing RDATA for " + responseTYPE);
+                }
             }
+            index++;
         }
-
     }
 
     // Parse domain name (QNAME) into sequence of bytes
@@ -183,6 +228,28 @@ public class DnsPacket {
         qnameByteArray.put((byte) 0);
 
         return qnameByteArray.array();
+    }
+    
+    // Given a String "IP", "NS", "MX" etc. and output its short representation
+    public short parseType(String qtype) {
+    	short qtypeShort;
+        if (qtype.toUpperCase() == TYPE_A) {
+            qtypeShort = 0x0001;    // IP address
+        } else if (qtype.toUpperCase() == TYPE_NS) {
+            qtypeShort = 0x0002;    // Name server
+        } else if (qtype.toUpperCase() == TYPE_MX) {
+            qtypeShort = 0x000f;    // Mail server
+        } else {
+            qtypeShort = 0x0000;
+            System.out.println("Invalid QTYPE: " + qtype);
+        }
+        return qtypeShort;
+    }
+    
+    // Returns a random Short ID
+    public short generateRandomID() {
+    	Random randomID = new Random(Short.MAX_VALUE + 1);
+    	return (short)randomID.nextInt();
     }
 
 }
