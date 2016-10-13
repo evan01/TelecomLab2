@@ -107,8 +107,8 @@ public class DnsClient {
 
             //Create a UDP packet to be sent
             DatagramPacket send_packet = new DatagramPacket(
-                    pkt.bytes,
-                    pkt.size,
+                    pkt.packetByte,
+                    pkt.packetByte.length,
                     addr,
                     pkt.options.port);
 
