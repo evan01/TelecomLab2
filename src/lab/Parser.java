@@ -138,7 +138,7 @@ public class Parser {
 
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("DNS SENDER PROGRAM", options);
+            formatter.printHelp(" {args} @[DNS_IP] [question]", options);
             Scanner sc = new Scanner(System.in);
             String newArguments = sc.next();
 
