@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
 import java.util.Hashtable;
 import java.util.Random;
 
@@ -41,6 +42,7 @@ public class DnsPacket {
     public DnsPacket(DNSOptions option) {
         this.QNAME = option.query;
         this.QTYPE = option.queryType;
+        this.options = option;
         
         short id = generateRandomID();
         
@@ -99,10 +101,10 @@ public class DnsPacket {
         this.ANCOUNT = ancount;
         this.NSCOUNT = nscount;
         this.ARCOUNT = arcount;
-    	
+
     	byte[] header = new byte[12];
-        header[0] = (byte) (id >>> 8);
-        header[1] = (byte) (id);
+        header[0] = (byte) ((id >> 8) & 0xff);//(id >>> 8);
+        header[1] = (byte) (id & 0xff);//(id);
         header[2] = (byte) ((qr << 7) | (opcode << 3) | (aa << 2) | (tc << 1) | rd);
         header[3] = (byte) ((ra << 7) | (z << 4) | rcode);
         header[4] = (byte) (qdcount >>> 8);
@@ -248,8 +250,12 @@ public class DnsPacket {
     
     // Returns a random Short ID
     public short generateRandomID() {
-    	Random randomID = new Random(Short.MAX_VALUE + 1);
-    	return (short)randomID.nextInt();
+    	Random randomID = new Random();
+        int rand = Math.abs(randomID.nextInt());
+        while (rand > Short.MAX_VALUE){
+            rand = Math.abs(randomID.nextInt());
+        }
+    	return (short)rand;
     }
 
 }
