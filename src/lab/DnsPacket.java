@@ -79,8 +79,9 @@ public class DnsPacket {
     	
     	DnsPacket p = new DnsPacket(opts);
     	byte[] packet = p.packetByte;
-    	
-    	System.out.println(p.HEADER);
+
+        String stringByteRep = new String(packet);
+        System.out.print(stringByteRep);
     }
     
     public byte[] packetHeader(

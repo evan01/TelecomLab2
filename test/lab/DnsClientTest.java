@@ -1,4 +1,4 @@
-/**
+package lab; /**
  * TelecomLab2
  * Created by eknox on 2016-10-06.
  */
