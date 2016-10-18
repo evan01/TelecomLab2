@@ -8,7 +8,6 @@ import java.nio.ShortBuffer;
 import java.util.Hashtable;
 import java.util.Random;
 
-
 public class DnsPacket {
 
     //This is the byte[] representation of the packet
@@ -48,17 +47,17 @@ public class DnsPacket {
         
         HEADER = packetHeader(id, 
 	        		(byte)0, // QR: query (0) or response(1)
-	        		(byte)0, // OPCODE: 0 for standard query
-	        		(byte)0, // AA: report whether response is authoritative
-	        		(byte)0, // TC: indicate whether or not message is truncated
-	        		(byte)1, // RD: 1 to indicate desire recursion
-	        		(byte)0, // RA: print error if server does not support recursive queries
-	        		(byte)0, // Z: 0 
-	        		(byte)0, // RCODE: 0 in request
-	        		(short)1, // QDCOUNT: 1
-	        		(short)0, // ANCOUNT: number of resource records in answer
-	        		(short)0, // NSCOUNT: ignore any response entries
-	        		(short)0); // ARCOUNT:
+	        		(byte)0, // OPCODE: 0000 for standard query
+	        		(byte)0, // AA: 0 not meaning for a query
+	        		(byte)0, // TC: 0 not truncated
+	        		(byte)1, // RD: 1 recursion requested
+	        		(byte)0, // RA: 0 not meaningful for a query
+	        		(byte)0, // Z: 0 reserved, set to zero
+	        		(byte)0, // RCODE: 0 not meaning for a query
+	        		(short)1, // QDCOUNT: 0001 one question
+	        		(short)0, // ANCOUNT: 0000 no records in the Answer section
+	        		(short)0, // NSCOUNT: 0000 no record in the Authoritative section
+	        		(short)0); // ARCOUNT: 0000 No records in the Additional section
 
         QUESTION = packetQuestion(QNAME, QTYPE, (short)0x0001);
         
@@ -71,6 +70,17 @@ public class DnsPacket {
         packetByteBuffer.put(ANSWER);
         
         packetByte = packetByteBuffer.array();
+    }
+    
+    public static void main(String args[]) {
+    	DNSOptions opts = new DNSOptions();
+    	opts.query = "www.mcgill.ca";
+    	opts.queryType = "A";
+    	
+    	DnsPacket p = new DnsPacket(opts);
+    	byte[] packet = p.packetByte;
+    	
+    	System.out.println(p.HEADER);
     }
     
     public byte[] packetHeader(
@@ -103,16 +113,21 @@ public class DnsPacket {
         this.ARCOUNT = arcount;
 
     	byte[] header = new byte[12];
-        header[0] = (byte) ((id >> 8) & 0xff);//(id >>> 8);
-        header[1] = (byte) (id & 0xff);//(id);
+        header[0] = (byte) ((id >> 8) & 0xff);
+        header[1] = (byte) (id & 0xff);
+        
         header[2] = (byte) ((qr << 7) | (opcode << 3) | (aa << 2) | (tc << 1) | rd);
         header[3] = (byte) ((ra << 7) | (z << 4) | rcode);
+        
         header[4] = (byte) (qdcount >>> 8);
         header[5] = (byte) qdcount;
+        
         header[6] = (byte) (arcount >>> 8);
         header[7] = (byte) arcount;
+        
         header[8] = (byte) (ancount >>> 8);
         header[9] = (byte) ancount;
+        
         header[10] = (byte) (nscount >>> 8);
         header[11] = (byte) nscount;
 
@@ -130,7 +145,7 @@ public class DnsPacket {
         question.put(qnameByteArray);
         question.putShort(qtypeShort);
         question.putShort(qclass);
-
+        
         return question.array();
     }
     
@@ -211,9 +226,10 @@ public class DnsPacket {
 
     // Parse domain name (QNAME) into sequence of bytes
     private byte[] parseQNAME(String qname) {
-        ByteBuffer qnameByteArray = ByteBuffer.allocate(qname.length());
-
-        String[] labels = qname.split(".");
+    	// Create the byte buffer that will contain all the domain name byte values
+        ByteBuffer qnameByteArray = ByteBuffer.allocate(qname.length()+2);
+        
+        String[] labels = qname.split("\\.");
 
         for (String label : labels) {
             // Each label is preceded by a single byte giving the length of label
@@ -250,12 +266,8 @@ public class DnsPacket {
     
     // Returns a random Short ID
     public short generateRandomID() {
-    	Random randomID = new Random();
-        int rand = Math.abs(randomID.nextInt());
-        while (rand > Short.MAX_VALUE){
-            rand = Math.abs(randomID.nextInt());
-        }
-    	return (short)rand;
+    	Random r = new Random();
+    	short rShort = (short)r.nextInt(32767); // Short = 2 bytes = -32768 to 32767
+    	return rShort;
     }
-
 }
