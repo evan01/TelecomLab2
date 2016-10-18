@@ -14,8 +14,7 @@ public class DnsClient {
      * @param args
      */
     public static void main(String args[]) {
-        DNSOptions opts = new DNSOptions();
-        opts = Parser.parse(args);
+        DNSOptions opts = Parser.parse(args);
         DnsPacket send_pkt = new DnsPacket(opts);
         try {
             //Try sending a new packet
@@ -67,19 +66,31 @@ public class DnsClient {
     private static DatagramPacket sendDNSPacket(DatagramPacket send_packet, DNSOptions opts) throws Exception {
 
         int attempts = 0;
-        int timeOut = opts.timeout * 1000;
+//        int timeOut = opts.timeout * 1000;
+        int timeOut = 2000;
 
         //Send packet and hope that it doesn't time out
         while (attempts < opts.maxRetries) {
-            //Try to send the packet
+            //todo implement a multithreaded approach to sending packets
+            //Try to send the packet in a new thread
             Thread t = new Thread(new ClientSender(opts, send_packet, attempts));
             t.start();
+            //todo FIX THIS WHEN YOU ARE DONE TESTING
             Thread.sleep(timeOut);
 
             //If after the timeout, we don't get anything, try again if we received packet
             if (ClientSender.isPacketReceived())
                 //Then we received the packet!
                 return ClientSender.getReceive_packet();
+            else{
+
+                if (attempts<opts.maxRetries -1){
+                    System.out.println("No response. Resending packet...\n");
+                }else{
+                    System.out.println("Error: No response packet received after "+attempts+1+" attempts");
+                }
+            }
+            //todo remember to kill the thread once you are done with it
             //If the timeout occurs then close the thread and try again
             if (t.isAlive())
                 t.interrupt();

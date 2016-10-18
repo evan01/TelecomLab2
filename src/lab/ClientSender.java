@@ -39,7 +39,7 @@ public class ClientSender implements Runnable {
             DatagramSocket clientSoc = new DatagramSocket();
 
             //SEND THE PACKET
-            System.out.print("Sending UDP packet: "+attemptNum);
+            System.out.println("Sending UDP packet: "+attemptNum);
             clientSoc.send(send_pkt);
 
             //RECEIVE THE PACKET
@@ -64,7 +64,7 @@ public class ClientSender implements Runnable {
     }
 
     public synchronized void getUdpPacket(DatagramSocket sock) throws Exception{
-            //Hopefully we receive this! Can timeout here...
+            //Hopefully we receive this! Can timeout here...THIS is what timesout
             sock.receive(getReceive_packet());
             if (getReceive_packet() == null){
                 throw new Exception("SOMETHING WRONG WITH PACKET");
@@ -80,7 +80,6 @@ public class ClientSender implements Runnable {
     public synchronized static void setReceive_packet(DatagramPacket receive_packet) {
         ClientSender.receive_packet = receive_packet;
     }
-
 
     public synchronized static boolean isPacketReceived() {
         return PacketReceived;

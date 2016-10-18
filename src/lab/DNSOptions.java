@@ -12,7 +12,6 @@ public class DNSOptions {
     public byte[] server; // IP addr of DNS server
     public String query; // www.mcgill.ca
 
-
     public DNSOptions(){
         this.timeout = 5;
         this.maxRetries = 3;
