@@ -64,10 +64,10 @@ public class DnsPacket {
         int size = UDP_DATA_BLOCK_SIZE - HEADER.length - QUESTION.length;
         ANSWER = packetAnswer(size);
         
-        ByteBuffer packetByteBuffer = ByteBuffer.allocate(UDP_DATA_BLOCK_SIZE);
+        ByteBuffer packetByteBuffer = ByteBuffer.allocate(HEADER.length+QUESTION.length);
         packetByteBuffer.put(HEADER);
         packetByteBuffer.put(QUESTION);
-        packetByteBuffer.put(ANSWER);
+        //packetByteBuffer.put(ANSWER);
         
         packetByte = packetByteBuffer.array();
     }
