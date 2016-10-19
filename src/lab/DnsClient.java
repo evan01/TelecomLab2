@@ -1,10 +1,6 @@
 package lab;
 
-import javax.xml.crypto.Data;
-import java.io.EOFException;
 import java.net.*;
-import javax.swing.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.*;
 
 public class DnsClient {
@@ -33,9 +29,9 @@ public class DnsClient {
     }
 
     private static void printResponseSection(DnsPacketResponse receieve_pkt) {
-        System.out.println("\n***Answer Section ("+receieve_pkt.numAnswers+") records ***");
+        System.out.println("\n***Answer Section (" + receieve_pkt.numAnswers + ") records ***");
 
-        String answer  = "IP\t"+receieve_pkt.ipAddr+"\t"+receieve_pkt.ttl+"\t"+receieve_pkt.authString;
+        String answer = "IP\t" + receieve_pkt.ipAddr + "\t" + receieve_pkt.ttl + "\t" + receieve_pkt.authString;
         System.out.println(answer);
     }
 
@@ -64,9 +60,9 @@ public class DnsClient {
     }
 
     private static void printQuery(DNSOptions options) {
-        System.out.println("\nDnsClient sending request for "+options.query);
-        System.out.println("Server: "+options.stringServer);
-        System.out.println("Request type: "+options.queryType);
+        System.out.println("\nDnsClient sending request for " + options.query);
+        System.out.println("Server: " + options.stringServer);
+        System.out.println("Request type: " + options.queryType);
     }
 
     /**
@@ -93,23 +89,23 @@ public class DnsClient {
         System.out.println();
 
         while (attempts < maxRetries) {
-           //Submit a new task to be completed
+            //Submit a new task to be completed
             Future<String> future = exec.submit(new ClientSender(opts, send_packet, attempts));
 
-            try{
+            try {
                 //Start a timer
                 System.out.print(".");
                 long now = System.currentTimeMillis();
                 String res = future.get(timeOut, TimeUnit.SECONDS);
-                double time = (double)(System.currentTimeMillis()-now);
-                time = time/(double)1000;
+                double time = (double) (System.currentTimeMillis() - now);
+                time = time / (double) 1000;
 
-                if(res.equals("success")){
-                    System.out.println("\nResponse received after "+time+" seconds and ("+attempts +" retries)");
+                if (res.equals("success")) {
+                    System.out.println("\nResponse received after " + time + " seconds and (" + attempts + " retries)");
                     return ClientSender.getReceive_packet();
                 }
                 //
-            } catch (TimeoutException e){
+            } catch (TimeoutException e) {
                 future.cancel(true);
                 attempts++;
                 continue;
