@@ -113,6 +113,7 @@ public class Parser {
             //First do the required arguments
             dnsOpts.query = args[args.length-1];
             String stringRepServer = args[args.length-2];
+            dnsOpts.stringServer = stringRepServer;
 
             //Validate that the server is in the right format, throws exception if not valid, also get rid of @character
             dnsOpts.server = validateAndGetIP(stringRepServer);
