@@ -33,7 +33,7 @@ public class DnsClient {
 
     private static void printResponseSection(DnsPacketResponse receieve_pkt) {
         System.out.println("\n***Answer Section (" + receieve_pkt.numAnswers + ") records ***");
-
+        
         String answer = "IP\t" + receieve_pkt.ipAddr + "\t" + receieve_pkt.ttl + "\t" + receieve_pkt.authString;
         System.out.println(answer);
     }
@@ -136,8 +136,8 @@ public class DnsClient {
 
             //Create a UDP packet to be sent
             DatagramPacket send_packet = new DatagramPacket(
-                    pkt.packetByte,
-                    pkt.packetByte.length,
+                    pkt.packet,
+                    pkt.packet.length,
                     addr,
                     pkt.options.port);
 
