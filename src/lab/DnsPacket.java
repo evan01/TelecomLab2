@@ -10,8 +10,7 @@ import java.util.Arrays;
 
 public class DnsPacket {
 
-    public String QNAME;
-    public String QTYPE;
+
 
     public byte[] HEADER;
     public byte[] QUESTION;
@@ -28,6 +27,9 @@ public class DnsPacket {
     short ID;
     byte QR, OPCODE, AA, TC, RD, RA, Z, RCODE;
     short QDCOUNT, ANCOUNT, NSCOUNT, ARCOUNT;
+    
+    // Question attributes
+    public String QNAME, QTYPE, QCLASS;
 
     // QTYPE: 16-bit code specifying the type of query.
     private String TYPE_A = "A";
@@ -48,7 +50,7 @@ public class DnsPacket {
 
         short id = generateRandomID();
 
-        HEADER = packetHeader(id,
+        HEADER = createHeader(id,
                 (byte) 0, // QR: query (0) or response(1)
                 (byte) 0, // OPCODE: 0000 for standard query
                 (byte) 0, // AA: 0 not meaning for a query
@@ -62,7 +64,7 @@ public class DnsPacket {
                 (short) 0, // NSCOUNT: 0000 no record in the Authoritative section
                 (short) 0); // ARCOUNT: 0000 No records in the Additional section
 
-        QUESTION = packetQuestion(QNAME, QTYPE, (short) 0x0001);
+        QUESTION = createQuestion(QNAME, QTYPE, (short) 0x0001);
 
         int size = UDP_DATA_BLOCK_SIZE - HEADER.length - QUESTION.length;
         ANSWER = packetAnswer(size);
@@ -81,13 +83,31 @@ public class DnsPacket {
         opts.queryType = "A";
 
         DnsPacket p = new DnsPacket(opts);
-        byte[] packet = p.packetByte;
+//        byte[] packet = p.packetByte;
 
-        String stringByteRep = new String(packet);
-        System.out.print(stringByteRep);
+//        String stringByteRep = new String(packet);
+//        System.out.print(stringByteRep);
+        
+        byte[] testpacket = hexStringToByteArray("411d8180000100000001000003777777066d6367686c6c0263610000000001c010000600010000070700290570656e7331c0100a686f73746d6173746572c010782a602f00002a3000000e1000093a8000015180");
+        
+        for (int i = 0; i < testpacket.length; i++) {
+        	System.out.println(testpacket[i]);
+        }
+        
+        p.interpretPacket(testpacket);
+    }
+    
+    public static byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                                 + Character.digit(s.charAt(i+1), 16));
+        }
+        return data;
     }
 
-    public byte[] packetHeader(
+    public byte[] createHeader(
             short id,
             byte qr,
             byte opcode,
@@ -139,11 +159,11 @@ public class DnsPacket {
     }
 
     // Construct packet question
-    public byte[] packetQuestion(String qname, String qtype, short qclass) {
+    public byte[] createQuestion(String qname, String qtype, short qclass) {
 
-        short qtypeShort = parseType(qtype); //2 bytes
+        short qtypeShort = parseQTYPE(qtype); //2 bytes
 
-        byte[] qnameByteArray = parseQNAME(qname);//2bytes
+        byte[] qnameByteArray = parseQNAME(qname); //2bytes
         ByteBuffer question = ByteBuffer.allocate(qnameByteArray.length + 2 * Short.BYTES);
 
         question.put(qnameByteArray);
@@ -203,11 +223,19 @@ public class DnsPacket {
 				+ "\n");
     }
 
+    // I don't know if we actually need this?
     public void interpretQuestion(byte[] question) {
-    	
+//    	byte[] qnameArray = Arrays.copyOfRange(question, 0, question.length - 4);
+//		byte[] qtypeArray = Arrays.copyOfRange(question, question.length - 4, question.length - 2);
+//		byte[] qclassArray = Arrays.copyOfRange(question, question.length - 2, question.length);
+//		
+//		short qtypeShort = (short)((qtypeArray[1] << 8) | qtypeArray[0]);
+//		short qclassShort = (short)((qclassArray[1] << 8) | qclassArray[0]);
+//		
+//		this.QTYPE = parseQTYPE(qtypeShort);		
     }
 
-    public void interpretAnswer(byte[] answer) {
+	public void interpretAnswer(byte[] answer) {
 
         int index = 0;
         for (byte b : answer) {
@@ -293,7 +321,7 @@ public class DnsPacket {
     }
 
     // Given a String "IP", "NS", "MX" etc. and output its short representation
-    public short parseType(String qtype) {
+    public short parseQTYPE(String qtype) {
         short qtypeShort;
         if (qtype.toUpperCase() == TYPE_A) {
             qtypeShort = 0x0001;    // IP address
@@ -306,6 +334,21 @@ public class DnsPacket {
             System.out.println("Invalid QTYPE: " + qtype);
         }
         return qtypeShort;
+    }
+    
+    public String parseQTYPE(short qtype) {
+    	String qtypeString;
+    	if (qtype == 0x0001) {
+            qtypeString = "A";    // IP address
+        } else if (qtype == 0x0002) {
+            qtypeString = "NS";    // Name server
+        } else if (qtype == 0x000f) {
+            qtypeString = "MX";    // Mail server
+        } else {
+            qtypeString = "ERROR";
+            System.out.println("Invalid QTYPE: " + qtype);
+        }
+        return qtypeString;
     }
 
     // Returns a random Short ID
