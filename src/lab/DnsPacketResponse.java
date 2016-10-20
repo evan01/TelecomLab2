@@ -24,46 +24,19 @@ public class DnsPacketResponse {
      */
     public void parseDnsPacketResponse(byte[] response, DNSOptions opts,int questionLength) throws IOException {
         this.questLen = questionLength;
+
         //Regardless on the kind of packet, we will parse the header the same every time
         DataInputStream responseData = parseDnsHeader(response);
 
-        //Depending on the kind of packet, parse it differently
-        if (opts.queryType.equals("MX")) {
-            //Mail server query
-            parseMailServerQuery(responseData);
+        //We will also want to send JUST the bytes containing the answer to the parser methods, skip question
+        for (int i =0;i<questLen;i++){
+            responseData.readByte();
         }
 
-        if (opts.queryType.equals("NS")) {
-            //Name server query
-            parseNameServerQuery(responseData);
-        }
+        //todo Now we just have to parse JUST the responses returned by the server
+        //http://www.networksorcery.com/enp/protocol/dns.htm#Answer RRs is a good website
 
-        if (opts.queryType.equals("A")) {
-            //standard ip query
-            parseIpQuery(responseData);
-        }
 
-    }
-
-    /**
-     * A name server query will return a record of the format
-     * NS \t [alias] \t [pref] \t [seconds can cache] \t [auth|nonauth]
-     *
-     * @param response The bytes contained inside of the dns response
-     */
-    private void parseNameServerQuery(DataInputStream response) {
-        //for every record returned,
-        for (int i = 0; i < answerCnt; i++) {
-            //Stringresponse.
-
-        }
-    }
-
-    private void parseIpQuery(DataInputStream response) {
-
-    }
-
-    private void parseMailServerQuery(DataInputStream response) {
 
     }
 
