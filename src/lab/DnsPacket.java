@@ -11,6 +11,7 @@ public class DnsPacket {
 
     public String QNAME;
     public String QTYPE;
+
     public byte[] HEADER;
     public byte[] QUESTION;
     public byte[] ANSWER;
@@ -23,6 +24,7 @@ public class DnsPacket {
     short ID;
     byte QR, OPCODE, AA, TC, RD, RA, Z, RCODE;
     short QDCOUNT, ANCOUNT, NSCOUNT, ARCOUNT;
+
     // QTYPE: 16-bit code specifying the type of query.
     private String TYPE_A = "A";
     private String TYPE_NS = "NS";
