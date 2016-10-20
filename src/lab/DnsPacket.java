@@ -10,15 +10,13 @@ import java.util.Arrays;
 
 public class DnsPacket {
 
-
-
     public byte[] HEADER;
     public byte[] QUESTION;
     public byte[] ANSWER;
     public int UDP_DATA_BLOCK_SIZE = 512; // RFC791
     
     //This is the byte[] representation of the packet
-    byte[] packetByte;
+    byte[] packet;
     
     //These are the arguments that were supplied to the packet
     DNSOptions options;
@@ -66,35 +64,42 @@ public class DnsPacket {
 
         QUESTION = createQuestion(QNAME, QTYPE, (short) 0x0001);
 
-        int size = UDP_DATA_BLOCK_SIZE - HEADER.length - QUESTION.length;
-        ANSWER = packetAnswer(size);
+//        int size = UDP_DATA_BLOCK_SIZE - HEADER.length - QUESTION.length;
+//        ANSWER = packetAnswer(size);
 
         ByteBuffer packetByteBuffer = ByteBuffer.allocate(HEADER.length + QUESTION.length);
         packetByteBuffer.put(HEADER);
         packetByteBuffer.put(QUESTION);
-        //packetByteBuffer.put(ANSWER);
-
-        packetByte = packetByteBuffer.array();
+//        packetByteBuffer.put(ANSWER);
+        
+        packet = packetByteBuffer.array();
+        
+        System.out.println("\nSent: " + packet.length + " bytes");
+        for (int i =0; i< packet.length; i++) {
+            System.out.print("0x" + String.format("%02x", packet[i]) + " ");
+        }
+        System.out.println("\n");
     }
 
     public static void main(String args[]) {
         DNSOptions opts = new DNSOptions();
         opts.query = "www.mcgill.ca";
         opts.queryType = "A";
-
+        
         DnsPacket p = new DnsPacket(opts);
 //        byte[] packet = p.packetByte;
 
 //        String stringByteRep = new String(packet);
 //        System.out.print(stringByteRep);
         
-        byte[] testpacket = hexStringToByteArray("411d8180000100000001000003777777066d6367686c6c0263610000000001c010000600010000070700290570656e7331c0100a686f73746d6173746572c010782a602f00002a3000000e1000093a8000015180");
+        byte[] testpacket = hexStringToByteArray("12348180000100010000000003777777066d6367696c6c0263610000010001c00c0001000100000024000484d8b1a0");
         
-        for (int i = 0; i < testpacket.length; i++) {
-        	System.out.println(testpacket[i]);
-        }
+//        for (int i =0; i< testpacket.length; i++) {
+//            System.out.print("0x" + String.format("%02x", testpacket[i]) + " " );            
+//        }
+//        System.out.println("");
         
-        p.interpretPacket(testpacket);
+        p.interpretPacket(testpacket);        
     }
     
     public static byte[] hexStringToByteArray(String s) {
@@ -174,12 +179,19 @@ public class DnsPacket {
     }
 
     // Construct packet answer
-    public byte[] packetAnswer(int size) {
+    public byte[] createAnswer(int size) {
         byte[] answer = new byte[size];
         return answer;
     }
     
     public void interpretPacket(byte[] packet) {
+    	
+    	System.out.println("Received: " + packet.length);    	
+    	for (int i =0; i< packet.length; i++) {
+            System.out.print("0x" + String.format("%02x", packet[i]) + " ");
+        }
+    	System.out.println("\n");
+    	
     	int header_size = this.HEADER.length;
     	int question_size = this.QUESTION.length;
     	int answer_size = packet.length - header_size - question_size;
@@ -207,32 +219,28 @@ public class DnsPacket {
 		this.NSCOUNT = (short) ((header[8] << 8) | header[9]);
 		this.ARCOUNT = (short) ((header[10] << 8) | header[11]);
 		
-		System.out.println("*****Header*****\n"
-				+ "ID:\t" + this.ID
-				+ "QR:\t" + this.QR
-				+ "OPCODE:\t" + this.OPCODE
-				+ "AA:\t" + this.AA
-				+ "TC:\t" + this.TC
-				+ "RD:\t" + this.RD
-				+ "RA:\t" + this.RA
-				+ "Z:\t" + this.Z
-				+ "RCODE:\t" + this.RCODE
-				+ "ANCOUNT:\t" + this.ANCOUNT
-				+ "NSCOUNT:\t" + this.NSCOUNT
-				+ "ARCOUNT:\t" + this.ARCOUNT
-				+ "\n");
+		System.out.println("ID:	 0x" + String.format("%02x", this.ID));
+		System.out.println("Flags:	 0x" + String.format("%02x", header[2]) + String.format("%02x", header[3]));
+		System.out.println("QDCOUNT: 0x" + String.format("%04x", this.QDCOUNT));
+		System.out.println("ANCOUNT: 0x" + String.format("%04x", this.ANCOUNT));
+		System.out.println("NSCOUNT: 0x" + String.format("%04x", this.NSCOUNT));
+		System.out.println("ARCOUNT: 0x" + String.format("%04x", this.ARCOUNT));		
     }
 
-    // I don't know if we actually need this?
     public void interpretQuestion(byte[] question) {
-//    	byte[] qnameArray = Arrays.copyOfRange(question, 0, question.length - 4);
-//		byte[] qtypeArray = Arrays.copyOfRange(question, question.length - 4, question.length - 2);
-//		byte[] qclassArray = Arrays.copyOfRange(question, question.length - 2, question.length);
-//		
-//		short qtypeShort = (short)((qtypeArray[1] << 8) | qtypeArray[0]);
-//		short qclassShort = (short)((qclassArray[1] << 8) | qclassArray[0]);
-//		
-//		this.QTYPE = parseQTYPE(qtypeShort);		
+    	byte[] qnameArray = Arrays.copyOfRange(question, 0, question.length - 4);
+		byte[] qtypeArray = Arrays.copyOfRange(question, question.length - 4, question.length - 2);
+		byte[] qclassArray = Arrays.copyOfRange(question, question.length - 2, question.length);
+		
+		short qtypeShort = (short)((qtypeArray[1] << 8) | qtypeArray[0]);
+		short qclassShort = (short)((qclassArray[1] << 8) | qclassArray[0]);
+				
+		this.QTYPE = "" + qtypeArray[0] + qtypeArray[1];
+		this.QCLASS = "" + qclassArray[0] + qclassArray[1];
+		
+		System.out.println("QName:	 " + this.QNAME);
+		System.out.println("QType:	 " + this.QTYPE);
+		System.out.println("QClass:	 " + this.QCLASS);
     }
 
 	public void interpretAnswer(byte[] answer) {
@@ -240,21 +248,25 @@ public class DnsPacket {
         int index = 0;
         for (byte b : answer) {
             // e.g. [c0 0c] [22 33] [44 55] [66 77 88 99] [aa bb] [cc dd ee ff]
-            if (String.format("%02X", b).equals("C0")) {
+            if (String.format("%02x", b).equals("c0")) {
 
                 Hashtable<String, String> packet = new Hashtable<String, String>();
 
                 short responseTYPE = (short) ((answer[index + 2] << 8) | answer[index + 3]);
                 packet.put("TYPE", Short.toString(responseTYPE));
+                System.out.println("AType:	 0x" + String.format("%04x", responseTYPE));
 
                 short responseCLASS = (short) ((answer[index + 4] << 8) | answer[index + 5]);
                 packet.put("CLASS", Short.toString(responseCLASS));
+                System.out.println("AClass:	 0x" + String.format("%04x", responseCLASS));
 
                 long responseTTL = (long) (((answer[index + 6] << 24) | (answer[index + 7]) << 16 | answer[index + 8]) << 8 | answer[index + 9]);
                 packet.put("TTL", Long.toString(responseTTL));
+                System.out.println("TTL:	 0x" + String.format("%04x", responseTTL));
 
                 short responseRDLENGTH = (short) ((answer[index + 10] << 8) | answer[index + 11]);
                 packet.put("RDLEGNTH", Short.toString(responseRDLENGTH));
+                System.out.println("Length:	 0x" + String.format("%04x", responseRDLENGTH));
 
                 byte[] responseRDATA = new byte[responseRDLENGTH];
 
@@ -267,6 +279,7 @@ public class DnsPacket {
                     try {
                         InetAddress ipAddr = InetAddress.getByAddress(responseRDATA);
                         packet.put("RDATA", ipAddr.getHostAddress());
+                        System.out.println("Address: " + packet.get("RDATA"));
                     } catch (UnknownHostException e) {
                         System.out.println("Invalid IP address");
                     }
@@ -302,6 +315,7 @@ public class DnsPacket {
         ByteBuffer qnameByteArray = ByteBuffer.allocate(qname.length() + 2);
 
         String[] labels = qname.split("\\.");
+        System.out.println(qname + " has " + labels.length + " labels");
 
         for (String label : labels) {
             // Each label is preceded by a single byte giving the length of label
@@ -312,6 +326,7 @@ public class DnsPacket {
             } catch (UnsupportedEncodingException e) {
                 System.out.println("label cannot be encoded into byte array: " + label);
             }
+            System.out.println("Writing: " + label);
         }
 
         // To signal the end of a domain name, one last byte is written with value 0
