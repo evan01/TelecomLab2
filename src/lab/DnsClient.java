@@ -15,6 +15,11 @@ public class DnsClient {
     public static void main(String args[]) {
         //first get the args from the user
         DNSOptions opts = Parser.parse(args);
+        sendDnsMessage(opts);
+        System.exit(0);
+    }
+
+    public static boolean sendDnsMessage(DNSOptions opts) {
 
         //Then try sending the packet
         DnsPacket send_pkt = new DnsPacket(opts);
@@ -23,24 +28,31 @@ public class DnsClient {
             DnsPacketResponse receieve_pkt = sendRequestUsingUDP(send_pkt);
             //If you don't get anything back then server did not respond
             if (receieve_pkt == null) {
-                System.out.println("\nNo response after " + send_pkt.options.maxRetries + " retries");
+                System.out.println("\nERROR\tMaximum number of retries [" + send_pkt.options.maxRetries + "] exceeded");
+                return false;
             } else {
                 printResponseSection(receieve_pkt);
+                return true;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.exit(0);
+        return false;
     }
 
     private static void printResponseSection(DnsPacketResponse receieve_pkt) {
+        if (receieve_pkt.records.size() + receieve_pkt.additionalRecords.size() < 1) {
+            System.out.print("NOTFOUND");
+            return;
+        }
+
         System.out.println("\n***Answer Section (" + receieve_pkt.answerCnt + ") records ***");
         for (int i = 0; i < receieve_pkt.records.size(); i++) {
-            System.out.println(receieve_pkt.records.get(0));
+            System.out.println(receieve_pkt.records.get(i));
         }
         System.out.println("\n***Additional Section (" + receieve_pkt.addRecCnt + ") records ***");
         for (int i = 0; i < receieve_pkt.additionalRecords.size(); i++) {
-            System.out.println(receieve_pkt.additionalRecords.get(0));
+            System.out.println(receieve_pkt.additionalRecords.get(i));
         }
     }
 
@@ -87,11 +99,6 @@ public class DnsClient {
         int attempts = 0;
         int timeOut = opts.timeout;
         int maxRetries = opts.maxRetries;
-
-        //For debugging
-        timeOut = 2;
-        maxRetries = 10;
-
 
         //Try to send the packet in a new thread
         ExecutorService exec = Executors.newSingleThreadExecutor();

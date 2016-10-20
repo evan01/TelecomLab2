@@ -22,6 +22,8 @@ public class DnsPacketResponse {
     int headerLen = 12;
     int questLen;
     String authority;
+    String compressionLabel;
+    String mxPref;
 
     /**
      * This will take in a stream of bytes and then parse out the answer
@@ -37,31 +39,23 @@ public class DnsPacketResponse {
         //We will also want to send JUST the bytes containing the answer to the parser methods, skip question
         responseData.skipBytes(questionLength);
 
-        //todo Now we just have to parse JUST the responses returned by the server
-        //http://www.networksorcery.com/enp/protocol/dns.htm#Answer RRs is a good website
-
         //Do the normal records first
         int totalResponses = answerCnt;
         records = new ArrayList<String>();
         for (int i = 0; i < totalResponses; i++) {
-            records.add(parseDnsRecord(responseData, response));
+            responseData = parseDnsRecord(responseData, response, true);
         }
 
-        //todo make sure that we can indeed parse additional records as well
         //Then do the additional records
         additionalRecords = new ArrayList<String>();
         int totalAdditionalResponses = addRecCnt;
         for (int i = 0; i < totalAdditionalResponses; i++) {
-            additionalRecords.add(parseDnsRecord(responseData, response));
+            responseData = parseDnsRecord(responseData, response, false);
         }
 
-        //todo possibly delete this
-        if (this.nsAuthCnt > 0) {
-            System.out.print("Server returned an authoritative type of message");
-        }
     }
 
-    private String parseDnsRecord(DataInputStream responseData, byte[] response) throws Exception {
+    private DataInputStream parseDnsRecord(DataInputStream responseData, byte[] response, boolean isNormalRecord) throws Exception {
 
         String record = "";
 
@@ -81,30 +75,103 @@ public class DnsPacketResponse {
 
         //Then depending on the kind of record, read the data!
         if (type == "IP") {
-            String data = readIpData(responseData, dataL);
+            String data = readIpData(responseData, response, dataL);
             record = type + "\t" + data + "\t" + ttl + "\t" + this.authority;
         }
 
         if (type == "CNAME") {
-            String data = "";//todo not implemented
+            String data = readNonIpData(responseData, dataL, response);
             record = type + "\t" + data + "\t" + ttl + "\t" + this.authority;
         }
 
         if (type == "MX") {
-            String data = "";//todo not implemented
-            record = type + "\t" + data + "\t" + ttl + "\t" + this.authority;
+
+            String data = readNonIpData(responseData, dataL, response);
+            if (records.size() < 1) {
+                this.mxPref = data;
+                record = type + "\t" + data + "\t" + ttl + "\t" + this.authority;
+                record = record.replaceAll("\r", "");
+            } else {
+                record = type + "\t" + data + "\t" + this.mxPref + "\t" + ttl + "\t" + this.authority;
+                record = record.replaceAll("\r", "");
+            }
+
         }
 
         if (type == "NS") {
-            String data = "";//todo not implemented
+            String data = readNonIpData(responseData, dataL, response);
             record = type + "\t" + data + "\t" + ttl + "\t" + this.authority;
         }
 
+        if (isNormalRecord)
+            records.add(record);
+        else
+            additionalRecords.add(record);
 
-        return record;
+        return responseData; //Return the byte stream pointer
     }
 
-    private String readIpData(DataInputStream responseData, int dataL) throws Exception {
+    private String readNonIpData(DataInputStream responseData, int dataL, byte[] response) throws Exception {
+        //Should just be a string to read
+        String data = "";
+        String compressedNm = "";
+        byte[] dataBytes = new byte[dataL];
+
+        //Read all of the data into a special array
+        for (int i = 0; i < dataBytes.length; i++) {
+            dataBytes[i] = responseData.readByte();
+        }
+
+        //Then turn these bytes into the data string that we need
+        for (int j = 0; j < dataBytes.length; j++) {
+            byte currentByte = dataBytes[j];
+            if (currentByte == (byte) (-64)) {
+                //Skip this and the next byte and sub in the compression label
+                int labelOffset = (int) dataBytes[j + 1];
+                String compLabel = getCompressionLabel2(labelOffset, response);
+                j++;
+                data = data + "." + compLabel;
+            } else {
+                if ((int) currentByte == 4) {
+                    data = data + ".";
+                } else {
+                    data = data + (char) currentByte;
+                }
+            }
+        }
+
+        return data;
+    }
+
+    private String getCompressionLabel2(int offset, byte[] response) {
+        String strLable = "";
+        boolean first = true;
+        //Then read the label, not that we know how long it is
+        while (response[offset] != (byte) 0) {
+            byte labelLengthByte = response[offset];
+            if (labelLengthByte > 0) {
+                byte[] label = new byte[labelLengthByte];
+                //Copy all the label bytes into a new array
+                for (int i = 0; i < label.length; i++) {
+                    label[i] = response[offset + i + 1];
+                }
+                offset += (label.length + 1);
+                if (first) {
+                    strLable = new String(label);
+                    first = false;
+                } else {
+                    strLable = strLable + "." + new String(label);
+                }
+            } else {
+                return strLable + this.compressionLabel; //error case
+            }
+        }
+        this.compressionLabel = strLable;//handy
+        return strLable;
+    }
+
+
+    private String readIpData(DataInputStream responseData, byte[] response, int dataL) throws Exception {
         boolean first = true;
         String ipAdd = "";
         //Should just be reading ip addr for ip query
@@ -175,9 +242,9 @@ public class DnsPacketResponse {
         while (!endOfName) {
             currentByte = responseData.readByte();
             if (currentByte == (byte) (-64)) {
-                responseData.reset();
-                responseData.skipBytes(questLen + headerLen);
-                recordName = recordName + getCompressionLabel(responseData, response);
+                //Then the next byte is a compression byte
+                int labelOffset = (int) responseData.readByte();
+                recordName = recordName + getCompressionLabel2(labelOffset, response);
             }
             if (currentByte == (byte) 0) {
                 endOfName = true;
@@ -212,6 +279,7 @@ public class DnsPacketResponse {
                 strLable = strLable + "." + new String(label);
             }
         }
+        this.compressionLabel = strLable;
         return strLable;
     }
 

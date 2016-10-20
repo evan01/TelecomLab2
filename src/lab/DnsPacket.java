@@ -4,9 +4,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Random;
-import java.util.Arrays;
 
 public class DnsPacket {
 
@@ -73,12 +73,12 @@ public class DnsPacket {
 //        packetByteBuffer.put(ANSWER);
         
         packet = packetByteBuffer.array();
-        
-        System.out.println("\nSent: " + packet.length + " bytes");
-        for (int i =0; i< packet.length; i++) {
-            System.out.print("0x" + String.format("%02x", packet[i]) + " ");
-        }
-        System.out.println("\n");
+        //todo delete these or use a debugger
+//        System.out.println("\nSent: " + packet.length + " bytes");
+//        for (int i =0; i< packet.length; i++) {
+//            System.out.print("0x" + String.format("%02x", packet[i]) + " ");
+//        }
+//        System.out.println("\n");
     }
 
     public static void main(String args[]) {
@@ -315,7 +315,7 @@ public class DnsPacket {
         ByteBuffer qnameByteArray = ByteBuffer.allocate(qname.length() + 2);
 
         String[] labels = qname.split("\\.");
-        System.out.println(qname + " has " + labels.length + " labels");
+// todo delete this       System.out.println(qname + " has " + labels.length + " labels");
 
         for (String label : labels) {
             // Each label is preceded by a single byte giving the length of label
@@ -326,7 +326,7 @@ public class DnsPacket {
             } catch (UnsupportedEncodingException e) {
                 System.out.println("label cannot be encoded into byte array: " + label);
             }
-            System.out.println("Writing: " + label);
+// todo delete this           System.out.println("Writing: " + label);
         }
 
         // To signal the end of a domain name, one last byte is written with value 0

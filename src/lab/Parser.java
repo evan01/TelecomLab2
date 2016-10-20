@@ -2,7 +2,9 @@ package lab; /**
  * TelecomLab2
  * Created by eknox on 2016-09-29.
  */
+
 import org.apache.commons.cli.*;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -142,6 +144,10 @@ public class Parser {
         } catch (ParseException e) {
             System.out.println(e.getMessage());
             System.out.println();
+            formatter.printHelp(" {args} @[DNS_IP] [question]", options);
+            System.exit(1);
+        } catch (Exception e) {
+            System.out.println("ERROR Incorrect input syntax: " + e.getMessage());
             formatter.printHelp(" {args} @[DNS_IP] [question]", options);
             System.exit(1);
         }
