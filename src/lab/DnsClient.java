@@ -11,7 +11,10 @@ public class DnsClient {
      * @param args
      */
     public static void main(String args[]) {
+        //first get the args from the user
         DNSOptions opts = Parser.parse(args);
+
+        //Then try sending the packet
         DnsPacket send_pkt = new DnsPacket(opts);
         try {
             //Try sending a new packet
@@ -25,7 +28,7 @@ public class DnsClient {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        System.exit(0);
     }
 
     private static void printResponseSection(DnsPacketResponse receieve_pkt) {
@@ -55,7 +58,7 @@ public class DnsClient {
             return null;
         } else {
             //Parse the packet and return the disected packet
-            return parseResponsePacket(receivePacket);
+            return parseResponsePacket(receivePacket,pkt.options);
         }
     }
 
@@ -150,11 +153,10 @@ public class DnsClient {
      *
      * @param pkt
      */
-    private static DnsPacketResponse parseResponsePacket(DatagramPacket pkt) {
+    private static DnsPacketResponse parseResponsePacket(DatagramPacket pkt, DNSOptions opts) {
         byte[] data = pkt.getData();
-        //PARSE IT HERE
         DnsPacketResponse rsp = new DnsPacketResponse();
-        rsp.parseDnsPacketResponse(data);
+        rsp.parseDnsPacketResponse(data,opts);
         return rsp;
     }
 }

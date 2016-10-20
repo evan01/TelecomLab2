@@ -20,7 +20,29 @@ public class DnsPacketResponse {
         numAnswers = 1;
     }
 
-    public void parseDnsPacketResponse(byte[] response) {
+    /**
+     * This will take in a stream of bytes and then parse out the answer
+     * @param response
+     */
+    public void parseDnsPacketResponse(byte[] response, DNSOptions opts){
+        System.out.println("PARSING THE PACKET");
+
+        //Depending on the kind of packet, parse it differently
+        if (opts.queryType.equals("MX")){
+
+        }
+
+        if (opts.queryType.equals("NS")){
+            //Name server query
+        }
+
+        if (opts.queryType.equals("A")){
+            //standard ip query
+        }
+
+    }
+
+    public void parseDnsPacketResponse2(byte[] response) {
         DataInputStream in = new DataInputStream(new ByteArrayInputStream(response));
 
         //Only interested in some of the components of the response
