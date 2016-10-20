@@ -20,8 +20,6 @@ public class DnsPacket {
     private String TYPE_NS = "NS";
     private String TYPE_MX = "MX";
 
-    public String QNAME;
-    public String QTYPE;
     public byte[] HEADER;
     public byte[] QUESTION;
     public byte[] ANSWER;
@@ -31,7 +29,10 @@ public class DnsPacket {
     short ID;
     byte QR, OPCODE, AA, TC, RD, RA, Z, RCODE;
     short QDCOUNT, ANCOUNT, NSCOUNT, ARCOUNT;
-
+    
+    // Question attributes
+    public String QNAME, QTYPE, QCLASS;
+    
     // Constructors
 
     /**
@@ -160,7 +161,16 @@ public class DnsPacket {
     }
     
     public void interpretQuestion(byte[] question) {
+    	int size = question.length;
+    	byte[] qname = ByteBuffer.allocate(size-4).put(question, 0, size-4).array();
+    	byte[] qtype = ByteBuffer.allocate(2).put(question, size-4, size-2).array();
+    	byte[] qclass = ByteBuffer.allocate(2).put(question, size-2, size).array();
     	
+//    	int[] label_size = 0;
+    		
+    	
+    	this.QTYPE = qtype.toString();
+    	this.QCLASS = qclass.toString();
     }
     
     public void interpretAnswer(byte[] header, byte[] question, byte[] answer) {
