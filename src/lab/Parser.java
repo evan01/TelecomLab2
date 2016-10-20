@@ -3,12 +3,9 @@ package lab; /**
  * Created by eknox on 2016-09-29.
  */
 import org.apache.commons.cli.*;
-
-import java.net.Inet4Address;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.nio.ByteBuffer;
+
 
 public class Parser {
 
@@ -20,6 +17,7 @@ public class Parser {
      * @param args
      */
     public static DNSOptions parse(String[] args){
+
         return parseWithOptions(args,getOptions());
     }
 
@@ -102,17 +100,22 @@ public class Parser {
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd;
 
+        if (args.length< 1){
+            System.out.println("Error, not enough args passed");
+            System.exit(1);
+        }
+
         //Create the DNSSettings data object
         DNSOptions dnsOpts = new DNSOptions();
 
         //Start parsing the arguments given by the user
         try {
-            String optionVAL = new String();
             cmd = parser.parse(options,args);
 
             //First do the required arguments
             dnsOpts.query = args[args.length-1];
             String stringRepServer = args[args.length-2];
+            dnsOpts.stringServer = stringRepServer;
 
             //Validate that the server is in the right format, throws exception if not valid, also get rid of @character
             dnsOpts.server = validateAndGetIP(stringRepServer);
@@ -128,21 +131,19 @@ public class Parser {
                 dnsOpts.port = Integer.parseInt(cmd.getOptionValue("p"));
 
             if (cmd.hasOption("mailServerQuery"))
-                dnsOpts.queryType = "mx";
+                dnsOpts.queryType = "MX";
 
             if (cmd.hasOption("nameServerQuery"))
-                dnsOpts.queryType = "ns";
+                dnsOpts.queryType = "NS";
 
             if (cmd.hasOption("mailServerQuery") && cmd.hasOption("nameServerQuery"))
-                throw new ParseException("Specify either mx or ns query type, default is IP");
+                throw new ParseException("Specify either mx or ns query type,(or none) default is IP");
 
         } catch (ParseException e) {
             System.out.println(e.getMessage());
+            System.out.println();
             formatter.printHelp(" {args} @[DNS_IP] [question]", options);
-            Scanner sc = new Scanner(System.in);
-            String newArguments = sc.next();
-
-            parseWithOptions(args, options);
+            System.exit(1);
         }
 
         return dnsOpts;

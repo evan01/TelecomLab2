@@ -10,13 +10,13 @@ public class DNSOptions {
     public int port;
     public String queryType; // type of query
     public byte[] server; // IP addr of DNS server
+    public String stringServer;
     public String query; // www.mcgill.ca
-
 
     public DNSOptions(){
         this.timeout = 5;
         this.maxRetries = 3;
         this.port = 53;
-        this.queryType = "ip";
+        this.queryType = "A";
     }
 }

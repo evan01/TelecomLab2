@@ -1,10 +1,7 @@
 package lab;
 
-import javax.xml.crypto.Data;
-import java.io.EOFException;
 import java.net.*;
-import javax.swing.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.*;
 
 public class DnsClient {
 
@@ -14,22 +11,31 @@ public class DnsClient {
      * @param args
      */
     public static void main(String args[]) {
-        DNSOptions opts = new DNSOptions();
-        opts = Parser.parse(args);
+        //first get the args from the user
+        DNSOptions opts = Parser.parse(args);
+
+        //Then try sending the packet
         DnsPacket send_pkt = new DnsPacket(opts);
         try {
             //Try sending a new packet
-            DnsPacket receieve_pkt = sendRequestUsingUDP(send_pkt);
+            DnsPacketResponse receieve_pkt = sendRequestUsingUDP(send_pkt);
             //If you don't get anything back then server did not respond
             if (receieve_pkt == null) {
-                System.out.println("No response after " + send_pkt.options.maxRetries + " retries");
+                System.out.println("\nNo response after " + send_pkt.options.maxRetries + " retries");
             } else {
-                System.out.print("YAY HERE ARE ALL THE DETAILS");
+                printResponseSection(receieve_pkt);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        System.exit(0);
+    }
 
+    private static void printResponseSection(DnsPacketResponse receieve_pkt) {
+        System.out.println("\n***Answer Section (" + receieve_pkt.numAnswers + ") records ***");
+
+        String answer = "IP\t" + receieve_pkt.ipAddr + "\t" + receieve_pkt.ttl + "\t" + receieve_pkt.authString;
+        System.out.println(answer);
     }
 
     /**
@@ -39,10 +45,10 @@ public class DnsClient {
      * @return
      * @throws Exception
      */
-    public static DnsPacket sendRequestUsingUDP(DnsPacket pkt) throws Exception {
+    public static DnsPacketResponse sendRequestUsingUDP(DnsPacket pkt) throws Exception {
 
         //Create UDP packet, can possibly throw an exception
-        System.out.println("Creating the UDP packet");
+        printQuery(pkt.options);
         DatagramPacket send_packet = createUdpPacket(pkt);
 
         //SEND the packet
@@ -52,8 +58,14 @@ public class DnsClient {
             return null;
         } else {
             //Parse the packet and return the disected packet
-            return parseResponsePacket(receivePacket);
+            return parseResponsePacket(receivePacket,pkt.options);
         }
+    }
+
+    private static void printQuery(DNSOptions options) {
+        System.out.println("\nDnsClient sending request for " + options.query);
+        System.out.println("Server: " + options.stringServer);
+        System.out.println("Request type: " + options.queryType);
     }
 
     /**
@@ -67,24 +79,41 @@ public class DnsClient {
     private static DatagramPacket sendDNSPacket(DatagramPacket send_packet, DNSOptions opts) throws Exception {
 
         int attempts = 0;
-        int timeOut = opts.timeout * 1000;
+        int timeOut = opts.timeout;
+        int maxRetries = opts.maxRetries;
 
-        //Send packet and hope that it doesn't time out
-        while (attempts < opts.maxRetries) {
-            //Try to send the packet
-            Thread t = new Thread(new ClientSender(opts, send_packet, attempts));
-            t.start();
-            Thread.sleep(timeOut);
+        //For debugging
+        timeOut = 2;
+        maxRetries = 10;
 
-            //If after the timeout, we don't get anything, try again if we received packet
-            if (ClientSender.isPacketReceived())
-                //Then we received the packet!
-                return ClientSender.getReceive_packet();
-            //If the timeout occurs then close the thread and try again
-            if (t.isAlive())
-                t.interrupt();
 
-            attempts++;
+        //Try to send the packet in a new thread
+        ExecutorService exec = Executors.newSingleThreadExecutor();
+        System.out.println();
+
+        while (attempts < maxRetries) {
+            //Submit a new task to be completed
+            Future<String> future = exec.submit(new ClientSender(opts, send_packet, attempts));
+
+            try {
+                //Start a timer
+                System.out.print(".");
+                long now = System.currentTimeMillis();
+                String res = future.get(timeOut, TimeUnit.SECONDS);
+                double time = (double) (System.currentTimeMillis() - now);
+                time = time / (double) 1000;
+
+                if (res.equals("success")) {
+                    System.out.println("\nResponse received after " + time + " seconds and (" + attempts + " retries)");
+                    return ClientSender.getReceive_packet();
+                }
+                //
+            } catch (TimeoutException e) {
+                future.cancel(true);
+                attempts++;
+                continue;
+            }
+
         }
         return null;
     }
@@ -124,10 +153,10 @@ public class DnsClient {
      *
      * @param pkt
      */
-    private static DnsPacket parseResponsePacket(DatagramPacket pkt) {
+    private static DnsPacketResponse parseResponsePacket(DatagramPacket pkt, DNSOptions opts) {
         byte[] data = pkt.getData();
-
-        //PARSE IT HERE
-        return null;
+        DnsPacketResponse rsp = new DnsPacketResponse();
+        rsp.parseDnsPacketResponse(data,opts);
+        return rsp;
     }
 }
