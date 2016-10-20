@@ -11,6 +11,7 @@ import java.io.IOException;
 public class DnsPacketResponse {
 
     String[] records;
+    int questLen;
     int questCnt;
     int answerCnt;
     int nsAuthCnt;
@@ -21,8 +22,8 @@ public class DnsPacketResponse {
      *
      * @param response
      */
-    public void parseDnsPacketResponse(byte[] response, DNSOptions opts) throws IOException {
-
+    public void parseDnsPacketResponse(byte[] response, DNSOptions opts,int questionLength) throws IOException {
+        this.questLen = questionLength;
         //Regardless on the kind of packet, we will parse the header the same every time
         DataInputStream responseData = parseDnsHeader(response);
 

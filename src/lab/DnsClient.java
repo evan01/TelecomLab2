@@ -60,7 +60,7 @@ public class DnsClient {
             return null;
         } else {
             //Parse the packet and return the disected packet
-            return parseResponsePacket(receivePacket,pkt.options);
+            return parseResponsePacket(receivePacket,pkt.options,pkt.QUESTION.length;
         }
     }
 
@@ -157,10 +157,10 @@ public class DnsClient {
      *
      * @param pkt
      */
-    private static DnsPacketResponse parseResponsePacket(DatagramPacket pkt, DNSOptions opts) throws IOException{
+    private static DnsPacketResponse parseResponsePacket(DatagramPacket pkt, DNSOptions opts,int questionLen) throws IOException{
         byte[] data = pkt.getData();
         DnsPacketResponse rsp = new DnsPacketResponse();
-        rsp.parseDnsPacketResponse(data,opts);
+        rsp.parseDnsPacketResponse(data,opts,questionLen);
         return rsp;
     }
 }
