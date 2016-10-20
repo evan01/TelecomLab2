@@ -137,9 +137,9 @@ public class DnsPacket {
     // Construct packet question
     public byte[] packetQuestion(String qname, String qtype, short qclass) {
 
-        short qtypeShort = parseType(qtype);
+        short qtypeShort = parseType(qtype); //2 bytes
 
-        byte[] qnameByteArray = parseQNAME(qname);
+        byte[] qnameByteArray = parseQNAME(qname);//2bytes
         ByteBuffer question = ByteBuffer.allocate(qnameByteArray.length + 2 * Short.BYTES);
 
         question.put(qnameByteArray);

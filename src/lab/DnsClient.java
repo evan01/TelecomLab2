@@ -1,5 +1,6 @@
 package lab;
 
+import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.*;
 
@@ -26,16 +27,17 @@ public class DnsClient {
                 printResponseSection(receieve_pkt);
             }
         } catch (Exception e) {
+            System.out.print("There was an error with sending/receiving packet see below\n");
             e.printStackTrace();
         }
         System.exit(0);
     }
 
     private static void printResponseSection(DnsPacketResponse receieve_pkt) {
-        System.out.println("\n***Answer Section (" + receieve_pkt.numAnswers + ") records ***");
-
-        String answer = "IP\t" + receieve_pkt.ipAddr + "\t" + receieve_pkt.ttl + "\t" + receieve_pkt.authString;
-        System.out.println(answer);
+//        System.out.println("\n***Answer Section (" + receieve_pkt.numAnswers + ") records ***");
+//
+//        String answer = "IP\t" + receieve_pkt.ipAddr + "\t" + receieve_pkt.ttl + "\t" + receieve_pkt.authString;
+//        System.out.println(answer);
     }
 
     /**
@@ -58,7 +60,7 @@ public class DnsClient {
             return null;
         } else {
             //Parse the packet and return the disected packet
-            return parseResponsePacket(receivePacket, pkt.options);
+            return parseResponsePacket(receivePacket,pkt.options,pkt.QUESTION.length;
         }
     }
 
@@ -83,6 +85,8 @@ public class DnsClient {
         int maxRetries = opts.maxRetries;
 
         //For debugging
+        //todo DELETE THIS WHEN YOU ARE DONE TESTING
+        System.out.println("DEBUG MODE ENABLED, sending 10 packets max");
         timeOut = 2;
         maxRetries = 10;
 
@@ -153,10 +157,10 @@ public class DnsClient {
      *
      * @param pkt
      */
-    private static DnsPacketResponse parseResponsePacket(DatagramPacket pkt, DNSOptions opts) {
+    private static DnsPacketResponse parseResponsePacket(DatagramPacket pkt, DNSOptions opts,int questionLen) throws IOException{
         byte[] data = pkt.getData();
         DnsPacketResponse rsp = new DnsPacketResponse();
-        rsp.parseDnsPacketResponse(data,opts);
+        rsp.parseDnsPacketResponse(data,opts,questionLen);
         return rsp;
     }
 }
