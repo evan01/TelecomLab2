@@ -9,71 +9,115 @@ import java.io.IOException;
  * Created by eknox on 2016-10-18.
  */
 public class DnsPacketResponse {
-    String ipAddr;
-    int ttl;
-    int queryType;
-    int auth;
-    String authString;
-    int numAnswers;
 
-    DnsPacketResponse() {
-        numAnswers = 1;
-    }
+    String[] records;
+    int questCnt;
+    int answerCnt;
+    int nsAuthCnt;
+    int addRecCnt;
 
     /**
      * This will take in a stream of bytes and then parse out the answer
+     *
      * @param response
      */
-    public void parseDnsPacketResponse(byte[] response, DNSOptions opts){
-        System.out.println("PARSING THE PACKET");
+    public void parseDnsPacketResponse(byte[] response, DNSOptions opts) throws IOException {
+
+        //Regardless on the kind of packet, we will parse the header the same every time
+        DataInputStream responseData = parseDnsHeader(response);
 
         //Depending on the kind of packet, parse it differently
-        if (opts.queryType.equals("MX")){
-
+        if (opts.queryType.equals("MX")) {
+            //Mail server query
+            parseMailServerQuery(responseData);
         }
 
-        if (opts.queryType.equals("NS")){
+        if (opts.queryType.equals("NS")) {
             //Name server query
+            parseNameServerQuery(responseData);
         }
 
-        if (opts.queryType.equals("A")){
+        if (opts.queryType.equals("A")) {
             //standard ip query
+            parseIpQuery(responseData);
         }
 
     }
 
-    public void parseDnsPacketResponse2(byte[] response) {
+    /**
+     * A name server query will return a record of the format
+     * NS \t [alias] \t [pref] \t [seconds can cache] \t [auth|nonauth]
+     *
+     * @param response The bytes contained inside of the dns response
+     */
+    private void parseNameServerQuery(DataInputStream response) {
+        //for every record returned,
+        for (int i = 0; i < answerCnt; i++) {
+            //Stringresponse.
+
+        }
+    }
+
+    private void parseIpQuery(DataInputStream response) {
+
+    }
+
+    private void parseMailServerQuery(DataInputStream response) {
+
+    }
+
+    private DataInputStream parseDnsHeader(byte[] response) throws IOException {
+        //The important thing here is to parse the header so that you can get the number of records
         DataInputStream in = new DataInputStream(new ByteArrayInputStream(response));
 
-        //Only interested in some of the components of the response
-        try {
-            //Skip the bytes we don't care about in the reader
-            in = skipRedundantBytes(in);
+        //Skip the Identifier(16bits), flags(16bits) and the question count (4 bytes)
+        in.readInt();//4 bytes
+        this.questCnt = in.readShort();//2 bytes
 
-            //read the authority
-            this.auth = (int) in.readShort();
-            convertAuthToString();
-            //Get the query type
-            this.queryType = (int) in.readShort();
-            // Read the ttl
-            this.ttl = in.readInt();
+        //Do read the answer record count
+        this.answerCnt = in.readShort(); //2bytes
 
-            //Read the ip address
-            this.ipAddr = readIpAddress(in);
+        //Do read the NS authority record count
+        this.nsAuthCnt = in.readShort();//2 bytes
 
-        } catch (Exception e) {
-            System.out.println("There was an IO exception!");
-            e.printStackTrace();
-        }
+        //Do read the additional record count
+        this.addRecCnt = in.readShort();//2 bytes
+
+        return in;
     }
 
-    private void convertAuthToString() {
-        if (this.auth == 1) {
-            this.authString = "auth";
-        }else {
-            this.authString = "nonauth";
-        }
-    }
+//    public void parseDnsPacketResponse2(byte[] response) {
+//        DataInputStream in = new DataInputStream(new ByteArrayInputStream(response));
+//
+//        //Only interested in some of the components of the response
+//        try {
+//            //Skip the bytes we don't care about in the reader
+//            in = skipRedundantBytes(in);
+//
+//            //read the authority
+//            this.auth = (int) in.readShort();
+//            convertAuthToString();
+//            //Get the query type
+//            this.queryType = (int) in.readShort();
+//            // Read the ttl
+//            this.ttl = in.readInt();
+//
+//            //Read the ip address
+//            this.ipAddr = readIpAddress(in);
+//
+//        } catch (Exception e) {
+//            System.out.println("There was an IO exception!");
+//            e.printStackTrace();
+//        }
+//    }
+
+//    private void convertAuthToString() {
+//        if (this.auth == 1) {
+//            this.authString = "auth";
+//        }else {
+//            this.authString = "nonauth";
+//        }
+//    }
 
 
     private String readIpAddress(DataInputStream in) throws Exception {
@@ -83,7 +127,7 @@ public class DnsPacketResponse {
             address = address + ("" + String.format("%d", (in.readByte() & 0xFF)) + ".");
         }
         //Delete the last .
-        address = address.substring(0,address.length()-1);
+        address = address.substring(0, address.length() - 1);
         return address;
     }
 

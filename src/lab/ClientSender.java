@@ -48,7 +48,6 @@ public class ClientSender implements Callable<String> {
             //RECEIVE THE PACKET
             getUdpPacket(clientSoc);
 
-
             //Set the flag that we indeed received the packet
             setPacketReceived(true);
 
