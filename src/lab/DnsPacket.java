@@ -6,6 +6,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Hashtable;
 import java.util.Random;
+import java.util.Arrays;
 
 public class DnsPacket {
 
@@ -16,10 +17,13 @@ public class DnsPacket {
     public byte[] QUESTION;
     public byte[] ANSWER;
     public int UDP_DATA_BLOCK_SIZE = 512; // RFC791
+    
     //This is the byte[] representation of the packet
     byte[] packetByte;
+    
     //These are the arguments that were supplied to the packet
     DNSOptions options;
+    
     // Header attributes
     short ID;
     byte QR, OPCODE, AA, TC, RD, RA, Z, RCODE;
@@ -154,16 +158,56 @@ public class DnsPacket {
         byte[] answer = new byte[size];
         return answer;
     }
-
+    
+    public void interpretPacket(byte[] packet) {
+    	int header_size = this.HEADER.length;
+    	int question_size = this.QUESTION.length;
+    	int answer_size = packet.length - header_size - question_size;
+		byte[] newHeader = Arrays.copyOfRange(packet, 0, header_size);
+		byte[] newQuestion = Arrays.copyOfRange(packet, header_size, header_size + question_size);
+		byte[] newAnswer = Arrays.copyOfRange(packet, header_size + question_size, header_size + question_size + answer_size);
+		
+		interpretHeader(newHeader);
+		interpretQuestion(newQuestion);
+		interpretAnswer(newAnswer);
+    }
+    
     public void interpretHeader(byte[] header) {
-
+    	this.ID = (short) ((header[0] << 8) | header[1]);
+		this.QR = (byte) ((header[2] & 0xff) >>> 7);
+		this.OPCODE = (byte) (((header[2] & 0xff) >>> 3) & 0x0f);
+		this.AA = (byte) (((header[2] & 0xff) >>> 2) & 0x01);
+		this.TC = (byte) (((header[2] & 0xff) >>> 1) & 0x01);
+		this.RD = (byte) ((header[2] & 0xff) & 0x01);
+		this.RA = (byte) (((header[3] & 0xff) >>> 7) & 0x01);
+		this.Z = (byte) (((header[3] & 0xff) >>> 4) & 0x07);
+		this.RCODE = (byte) ((header[3] & 0xff) & 0x0f);
+		this.QDCOUNT = (short) ((header[4] << 8) | header[5]);
+		this.ANCOUNT = (short) ((header[6] << 8) | header[7]);
+		this.NSCOUNT = (short) ((header[8] << 8) | header[9]);
+		this.ARCOUNT = (short) ((header[10] << 8) | header[11]);
+		
+		System.out.println("*****Header*****\n"
+				+ "ID:\t" + this.ID
+				+ "QR:\t" + this.QR
+				+ "OPCODE:\t" + this.OPCODE
+				+ "AA:\t" + this.AA
+				+ "TC:\t" + this.TC
+				+ "RD:\t" + this.RD
+				+ "RA:\t" + this.RA
+				+ "Z:\t" + this.Z
+				+ "RCODE:\t" + this.RCODE
+				+ "ANCOUNT:\t" + this.ANCOUNT
+				+ "NSCOUNT:\t" + this.NSCOUNT
+				+ "ARCOUNT:\t" + this.ARCOUNT
+				+ "\n");
     }
 
     public void interpretQuestion(byte[] question) {
-
+    	
     }
 
-    public void interpretAnswer(byte[] header, byte[] question, byte[] answer) {
+    public void interpretAnswer(byte[] answer) {
 
         int index = 0;
         for (byte b : answer) {
