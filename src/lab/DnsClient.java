@@ -58,7 +58,7 @@ public class DnsClient {
             return null;
         } else {
             //Parse the packet and return the disected packet
-            return parseResponsePacket(receivePacket,pkt.options);
+            return parseResponsePacket(receivePacket, pkt.options);
         }
     }
 
