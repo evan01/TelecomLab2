@@ -45,16 +45,23 @@ public class DnsClientTest {
 
     @Test
     public void shouldFAILTEST() {
-        String args[] = {"-t", "3", "-r", "45", "-p", "53", "-mx", "@8.8.8", "www.google.com"}; //Wrong server
+        String args[] = {"-t", "3", "-r", "45", "-p", "53", "-mx", "@8.", "www.google.com"}; //Wrong server
         DnsClient client = new DnsClient();
         Assert.assertEquals(DnsClient.sendDnsMessage(Parser.parse(args)), false);
     }
 
     @Test
     public void shouldFAILTEST2() {
-        String args[] = {"-t", "3", "-r", "45", "-p", "53", "-mx", "@8.8.8.8", "www.amazon.ca"}; //Wrong argument
+        String args[] = {"-tlkjh", "3", "-r", "45", "-p", "53", "@8.8.8.8", "www.amazon.ca"}; //Wrong argument
         DnsClient client = new DnsClient();
         Assert.assertEquals(DnsClient.sendDnsMessage(Parser.parse(args)), false);
+    }
+
+    @Test
+    public void shouldPass() {
+        String args[] = {"@132.206.85.18", "www.amazon.ca"}; //Wrong argument
+        DnsClient client = new DnsClient();
+        Assert.assertEquals(DnsClient.sendDnsMessage(Parser.parse(args)), true);
     }
 
 }

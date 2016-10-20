@@ -85,17 +85,15 @@ public class DnsPacketResponse {
         }
 
         if (type == "MX") {
-
+            int pref = responseData.readShort();
             String data = readNonIpData(responseData, dataL, response);
             if (records.size() < 1) {
-                this.mxPref = data;
-                record = type + "\t" + data + "\t" + ttl + "\t" + this.authority;
+                record = type + "\t" + data + "\t" +pref+"\t"+ ttl + "\t" + this.authority;
                 record = record.replaceAll("\r", "");
             } else {
-                record = type + "\t" + data + "\t" + this.mxPref + "\t" + ttl + "\t" + this.authority;
+                record = type + "\t" + data + "\t" + pref+ "\t" + ttl + "\t" + this.authority;
                 record = record.replaceAll("\r", "");
             }
-
         }
 
         if (type == "NS") {
