@@ -1,6 +1,8 @@
 package lab;
 
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.util.concurrent.*;
 
 public class DnsClient {
@@ -32,10 +34,14 @@ public class DnsClient {
     }
 
     private static void printResponseSection(DnsPacketResponse receieve_pkt) {
-        System.out.println("\n***Answer Section (" + receieve_pkt.numAnswers + ") records ***");
-        
-        String answer = "IP\t" + receieve_pkt.ipAddr + "\t" + receieve_pkt.ttl + "\t" + receieve_pkt.authString;
-        System.out.println(answer);
+        System.out.println("\n***Answer Section (" + receieve_pkt.answerCnt + ") records ***");
+        for (int i = 0; i < receieve_pkt.records.size(); i++) {
+            System.out.println(receieve_pkt.records.get(0));
+        }
+        System.out.println("\n***Additional Section (" + receieve_pkt.addRecCnt + ") records ***");
+        for (int i = 0; i < receieve_pkt.additionalRecords.size(); i++) {
+            System.out.println(receieve_pkt.additionalRecords.get(0));
+        }
     }
 
     /**
@@ -58,7 +64,7 @@ public class DnsClient {
             return null;
         } else {
             //Parse the packet and return the disected packet
-            return parseResponsePacket(receivePacket,pkt.options);
+            return parseResponsePacket(receivePacket, pkt.options, pkt.QUESTION.length);
         }
     }
 
@@ -153,10 +159,10 @@ public class DnsClient {
      *
      * @param pkt
      */
-    private static DnsPacketResponse parseResponsePacket(DatagramPacket pkt, DNSOptions opts) {
+    private static DnsPacketResponse parseResponsePacket(DatagramPacket pkt, DNSOptions opts, int questionLen) throws Exception {
         byte[] data = pkt.getData();
         DnsPacketResponse rsp = new DnsPacketResponse();
-        rsp.parseDnsPacketResponse(data,opts);
+        rsp.parseDnsPacketResponse(data, opts, questionLen);
         return rsp;
     }
 }
