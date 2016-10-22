@@ -14,18 +14,18 @@ public class DnsPacket {
     public byte[] QUESTION;
     public byte[] ANSWER;
     public int UDP_DATA_BLOCK_SIZE = 512; // RFC791
-    
+
     //This is the byte[] representation of the packet
     byte[] packet;
-    
+
     //These are the arguments that were supplied to the packet
     DNSOptions options;
-    
+
     // Header attributes
     short ID;
     byte QR, OPCODE, AA, TC, RD, RA, Z, RCODE;
     short QDCOUNT, ANCOUNT, NSCOUNT, ARCOUNT;
-    
+
     // Question attributes
     public String QNAME, QTYPE, QCLASS;
 
@@ -71,7 +71,7 @@ public class DnsPacket {
         packetByteBuffer.put(HEADER);
         packetByteBuffer.put(QUESTION);
 //        packetByteBuffer.put(ANSWER);
-        
+
         packet = packetByteBuffer.array();
         //todo delete these or use a debugger
 //        System.out.println("\nSent: " + packet.length + " bytes");
@@ -85,29 +85,29 @@ public class DnsPacket {
         DNSOptions opts = new DNSOptions();
         opts.query = "www.mcgill.ca";
         opts.queryType = "A";
-        
+
         DnsPacket p = new DnsPacket(opts);
 //        byte[] packet = p.packetByte;
 
 //        String stringByteRep = new String(packet);
 //        System.out.print(stringByteRep);
-        
+
         byte[] testpacket = hexStringToByteArray("12348180000100010000000003777777066d6367696c6c0263610000010001c00c0001000100000024000484d8b1a0");
-        
+
 //        for (int i =0; i< testpacket.length; i++) {
 //            System.out.print("0x" + String.format("%02x", testpacket[i]) + " " );            
 //        }
 //        System.out.println("");
-        
-        p.interpretPacket(testpacket);        
+
+        p.interpretPacket(testpacket);
     }
-    
+
     public static byte[] hexStringToByteArray(String s) {
         int len = s.length();
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
             data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                                 + Character.digit(s.charAt(i+1), 16));
+                    + Character.digit(s.charAt(i + 1), 16));
         }
         return data;
     }
@@ -183,67 +183,67 @@ public class DnsPacket {
         byte[] answer = new byte[size];
         return answer;
     }
-    
+
     public void interpretPacket(byte[] packet) {
-    	
-    	System.out.println("Received: " + packet.length);    	
-    	for (int i =0; i< packet.length; i++) {
+
+        System.out.println("Received: " + packet.length);
+        for (int i = 0; i < packet.length; i++) {
             System.out.print("0x" + String.format("%02x", packet[i]) + " ");
         }
-    	System.out.println("\n");
-    	
-    	int header_size = this.HEADER.length;
-    	int question_size = this.QUESTION.length;
-    	int answer_size = packet.length - header_size - question_size;
-		byte[] newHeader = Arrays.copyOfRange(packet, 0, header_size);
-		byte[] newQuestion = Arrays.copyOfRange(packet, header_size, header_size + question_size);
-		byte[] newAnswer = Arrays.copyOfRange(packet, header_size + question_size, header_size + question_size + answer_size);
-		
-		interpretHeader(newHeader);
-		interpretQuestion(newQuestion);
-		interpretAnswer(newAnswer);
+        System.out.println("\n");
+
+        int header_size = this.HEADER.length;
+        int question_size = this.QUESTION.length;
+        int answer_size = packet.length - header_size - question_size;
+        byte[] newHeader = Arrays.copyOfRange(packet, 0, header_size);
+        byte[] newQuestion = Arrays.copyOfRange(packet, header_size, header_size + question_size);
+        byte[] newAnswer = Arrays.copyOfRange(packet, header_size + question_size, header_size + question_size + answer_size);
+
+        interpretHeader(newHeader);
+        interpretQuestion(newQuestion);
+        interpretAnswer(newAnswer);
     }
-    
+
     public void interpretHeader(byte[] header) {
-    	this.ID = (short) ((header[0] << 8) | header[1]);
-		this.QR = (byte) ((header[2] & 0xff) >>> 7);
-		this.OPCODE = (byte) (((header[2] & 0xff) >>> 3) & 0x0f);
-		this.AA = (byte) (((header[2] & 0xff) >>> 2) & 0x01);
-		this.TC = (byte) (((header[2] & 0xff) >>> 1) & 0x01);
-		this.RD = (byte) ((header[2] & 0xff) & 0x01);
-		this.RA = (byte) (((header[3] & 0xff) >>> 7) & 0x01);
-		this.Z = (byte) (((header[3] & 0xff) >>> 4) & 0x07);
-		this.RCODE = (byte) ((header[3] & 0xff) & 0x0f);
-		this.QDCOUNT = (short) ((header[4] << 8) | header[5]);
-		this.ANCOUNT = (short) ((header[6] << 8) | header[7]);
-		this.NSCOUNT = (short) ((header[8] << 8) | header[9]);
-		this.ARCOUNT = (short) ((header[10] << 8) | header[11]);
-		
-		System.out.println("ID:	 0x" + String.format("%02x", this.ID));
-		System.out.println("Flags:	 0x" + String.format("%02x", header[2]) + String.format("%02x", header[3]));
-		System.out.println("QDCOUNT: 0x" + String.format("%04x", this.QDCOUNT));
-		System.out.println("ANCOUNT: 0x" + String.format("%04x", this.ANCOUNT));
-		System.out.println("NSCOUNT: 0x" + String.format("%04x", this.NSCOUNT));
-		System.out.println("ARCOUNT: 0x" + String.format("%04x", this.ARCOUNT));		
+        this.ID = (short) ((header[0] << 8) | header[1]);
+        this.QR = (byte) ((header[2] & 0xff) >>> 7);
+        this.OPCODE = (byte) (((header[2] & 0xff) >>> 3) & 0x0f);
+        this.AA = (byte) (((header[2] & 0xff) >>> 2) & 0x01);
+        this.TC = (byte) (((header[2] & 0xff) >>> 1) & 0x01);
+        this.RD = (byte) ((header[2] & 0xff) & 0x01);
+        this.RA = (byte) (((header[3] & 0xff) >>> 7) & 0x01);
+        this.Z = (byte) (((header[3] & 0xff) >>> 4) & 0x07);
+        this.RCODE = (byte) ((header[3] & 0xff) & 0x0f);
+        this.QDCOUNT = (short) ((header[4] << 8) | header[5]);
+        this.ANCOUNT = (short) ((header[6] << 8) | header[7]);
+        this.NSCOUNT = (short) ((header[8] << 8) | header[9]);
+        this.ARCOUNT = (short) ((header[10] << 8) | header[11]);
+
+        System.out.println("ID:	 0x" + String.format("%02x", this.ID));
+        System.out.println("Flags:	 0x" + String.format("%02x", header[2]) + String.format("%02x", header[3]));
+        System.out.println("QDCOUNT: 0x" + String.format("%04x", this.QDCOUNT));
+        System.out.println("ANCOUNT: 0x" + String.format("%04x", this.ANCOUNT));
+        System.out.println("NSCOUNT: 0x" + String.format("%04x", this.NSCOUNT));
+        System.out.println("ARCOUNT: 0x" + String.format("%04x", this.ARCOUNT));
     }
 
     public void interpretQuestion(byte[] question) {
-    	byte[] qnameArray = Arrays.copyOfRange(question, 0, question.length - 4);
-		byte[] qtypeArray = Arrays.copyOfRange(question, question.length - 4, question.length - 2);
-		byte[] qclassArray = Arrays.copyOfRange(question, question.length - 2, question.length);
-		
-		short qtypeShort = (short)((qtypeArray[1] << 8) | qtypeArray[0]);
-		short qclassShort = (short)((qclassArray[1] << 8) | qclassArray[0]);
-				
-		this.QTYPE = "" + qtypeArray[0] + qtypeArray[1];
-		this.QCLASS = "" + qclassArray[0] + qclassArray[1];
-		
-		System.out.println("QName:	 " + this.QNAME);
-		System.out.println("QType:	 " + this.QTYPE);
-		System.out.println("QClass:	 " + this.QCLASS);
+        byte[] qnameArray = Arrays.copyOfRange(question, 0, question.length - 4);
+        byte[] qtypeArray = Arrays.copyOfRange(question, question.length - 4, question.length - 2);
+        byte[] qclassArray = Arrays.copyOfRange(question, question.length - 2, question.length);
+
+        short qtypeShort = (short) ((qtypeArray[1] << 8) | qtypeArray[0]);
+        short qclassShort = (short) ((qclassArray[1] << 8) | qclassArray[0]);
+
+        this.QTYPE = "" + qtypeArray[0] + qtypeArray[1];
+        this.QCLASS = "" + qclassArray[0] + qclassArray[1];
+
+        System.out.println("QName:	 " + this.QNAME);
+        System.out.println("QType:	 " + this.QTYPE);
+        System.out.println("QClass:	 " + this.QCLASS);
     }
 
-	public void interpretAnswer(byte[] answer) {
+    public void interpretAnswer(byte[] answer) {
 
         int index = 0;
         for (byte b : answer) {
@@ -350,10 +350,10 @@ public class DnsPacket {
         }
         return qtypeShort;
     }
-    
+
     public String parseQTYPE(short qtype) {
-    	String qtypeString;
-    	if (qtype == 0x0001) {
+        String qtypeString;
+        if (qtype == 0x0001) {
             qtypeString = "A";    // IP address
         } else if (qtype == 0x0002) {
             qtypeString = "NS";    // Name server

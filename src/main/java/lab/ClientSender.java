@@ -1,7 +1,5 @@
 package lab;
 
-import jdk.nashorn.internal.codegen.CompilerConstants;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -22,7 +20,7 @@ public class ClientSender implements Callable<String> {
     DatagramPacket send_pkt;
     int attemptNum;
 
-    public ClientSender(DNSOptions opts, DatagramPacket packet,int attemptNumber){
+    public ClientSender(DNSOptions opts, DatagramPacket packet, int attemptNumber) {
         options = opts;
         send_pkt = packet;
         attemptNum = attemptNumber;
@@ -33,7 +31,7 @@ public class ClientSender implements Callable<String> {
     /**
      * This function will try and send a packet
      */
-    public String call() throws Exception{
+    public String call() throws Exception {
         try {
             // Create packet to store data that the server is sending us
             byte[] receiveData = new byte[512];
@@ -54,25 +52,25 @@ public class ClientSender implements Callable<String> {
             //Close the client socket
             clientSoc.close();
 
-        }catch (SocketException skt){
+        } catch (SocketException skt) {
             System.out.println("Socket problem");
             skt.printStackTrace();
-        }catch (IOException io){
+        } catch (IOException io) {
             System.out.println("IO Exception");
             io.printStackTrace();
-        }catch (Exception e){
+        } catch (Exception e) {
             System.out.println("");
             throw new TimeoutException("Timed out, try sending again");
         }
         return "success";
     }
 
-    public synchronized void getUdpPacket(DatagramSocket sock) throws Exception{
-            //Hopefully we receive this! Can timeout here...THIS is what timesout
-            sock.receive(getReceive_packet());
-            if (getReceive_packet() == null){
-                throw new Exception("SOMETHING WRONG WITH PACKET");
-            }
+    public synchronized void getUdpPacket(DatagramSocket sock) throws Exception {
+        //Hopefully we receive this! Can timeout here...THIS is what timesout
+        sock.receive(getReceive_packet());
+        if (getReceive_packet() == null) {
+            throw new Exception("SOMETHING WRONG WITH PACKET");
+        }
 
     }
 

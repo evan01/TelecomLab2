@@ -1,22 +1,21 @@
 package lab;
 
 import org.junit.Test;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import static org.junit.Assert.*;
 
 /**
  * TelecomLab2
  * Created by eknox on 2016-10-18.
  */
 public class DnsPacketTest {
-    private static final String DNS_SERVER_ADDRESS = "8.8.8.8";
+    private static final String DNS_SERVER_ADDRESS = "132.206.44.65";
     private static final int DNS_SERVER_PORT = 53;
 
     @Test

@@ -64,4 +64,12 @@ public class DnsClientTest {
         Assert.assertEquals(DnsClient.sendDnsMessage(Parser.parse(args)), true);
     }
 
+    @Test
+    public void labTest1() {
+        String args[] = {"@132.206.44.69", "www.amazon.ca"}; //Wrong argument
+        DnsClient client = new DnsClient();
+        DNSOptions opts = Parser.parse(args);
+        Assert.assertEquals(DnsClient.sendDnsMessage(opts), true);
+    }
+
 }
