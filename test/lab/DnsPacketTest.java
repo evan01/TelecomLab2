@@ -15,11 +15,9 @@ import java.net.InetAddress;
  * Created by eknox on 2016-10-18.
  */
 public class DnsPacketTest {
-<<<<<<< HEAD
-    private static final String DNS_SERVER_ADDRESS = "132.206.44.69";
-=======
+
     private static final String DNS_SERVER_ADDRESS = "132.206.44.65";
->>>>>>> 60a1851dcc057dd07ededfdd9e86212c4dceb190
+
     private static final int DNS_SERVER_PORT = 53;
 
     @Test
