@@ -16,7 +16,7 @@ import static org.junit.Assert.*;
  * Created by eknox on 2016-10-18.
  */
 public class DnsPacketTest {
-    private static final String DNS_SERVER_ADDRESS = "8.8.8.8";
+    private static final String DNS_SERVER_ADDRESS = "132.206.44.69";
     private static final int DNS_SERVER_PORT = 53;
 
     @Test
@@ -25,7 +25,7 @@ public class DnsPacketTest {
      * It is only to be used for wireshark testing purposes
      */
     public void testSampleUDP() throws Exception{
-        String domain = "www.mcgill.ca";
+        String domain = "mycourses2.mcgill.ca";
         InetAddress ipAddress = InetAddress.getByName(DNS_SERVER_ADDRESS);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
