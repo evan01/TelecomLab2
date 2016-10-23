@@ -13,7 +13,7 @@ public class DNSOptions {
     public String stringServer;
     public String query; // www.mcgill.ca
 
-    public DNSOptions(){
+    public DNSOptions() {
         this.timeout = 5;
         this.maxRetries = 3;
         this.port = 53;
